@@ -82,6 +82,21 @@ function _print_branch_name -a git_branch_name -a main_color -a color_unpushed -
   echo $git_branch
 end
 
+# Function to print the git branch name in the prompt,
+# with the specified main color, color for unpushed branch, and normal color
+# Also checks if the current git branch has a remote tracking branch,
+# and if not, adds an arrow symbol to indicate that it is not pushed to a remote
+function _print_branch_name -a git_branch_name -a main_color -a color_unpushed -a color_normal 
+  set -l has_remote (__git_has_remote $git_branch_name)
+  
+  set -l git_branch $main_color$git_branch_name$color_normal
+  if [ ! $has_remote ]
+    set git_branch "$color_unpushed↑$git_branch$color_normal"
+  end
+
+  echo $git_branch
+end
+
 # Function to print the git information in the prompt
 # with the specified colors for the git branch, normal text,
 # brackets, unpushed commits, and dirty repository status
@@ -95,7 +110,7 @@ function _print_git_status -a main_color -a color_normal -a color_bracket -a col
 
     set -l git_branch (_print_branch_name $git_branch_name $main_color $color_unpushed $color_normal)
 
-    set -l git_status "$color_bracket ($git_branch$color_bracket)$color_normal"
+    set -l git_status "$color_bracket($git_branch$color_bracket)$color_normal"
 
     if [ $git_pending_commits_count != 0 ]
       set git_status "$git_status $color_unpushed↑$git_pending_commits_count$color_normal"
@@ -116,6 +131,18 @@ function _print_git_status -a main_color -a color_normal -a color_bracket -a col
   echo ""
 end 
 
+# Split command line to two lines if prompt is bigger than half
+# of the screen. It also adds indication line connecting two
+# prompt lines to indicate movement
+function _print_spit_too_long -a prompt -a arrow
+  
+  if [ (string length --visible $prompt) -gt (math -s0 $COLUMNS / 2) ]
+    echo $prompt\\n'└'$arrow' '
+  else
+    echo $prompt$arrow' '
+  end
+end
+
 function fish_prompt
   # get latest status first thing - because functions may 
   # change it later on
@@ -135,11 +162,14 @@ function fish_prompt
   set -l color_git_branch (set_color -o $fish_color_operator)
 
   set -l failed (_print_failed_status $current_status $color_error $normal)
-  set -l arrow (_print_user $color_error $normal)
+  set -l user (_print_user $color_error $normal)
+  set -l arrow '⋊>'
   set -l time (_print_time $color_normal $color_normal)
 
   set -l cwd $color_cwd(basename (prompt_pwd))$color_normal
   set -l git_status (_print_git_status $color_git_branch $color_normal $color_bracket $color_unpushed $color_git_dirty $color_unpulled)
 
-  echo -n -s $arrow $time ' ' $cwd $git_status ' ' $failed $color_normal ''
+  set -l command_line "$user$time $cwd $git_status$failed$color_normal"
+  set -l split (_print_spit_too_long $command_line $arrow)
+  echo -s -e $split
 end
