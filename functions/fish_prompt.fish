@@ -22,7 +22,7 @@ end
 # of the current git branch
 # Returns 0 if there are no commits ahead
 function __git_pending_commits_count -a branch_name
-  echo (command git branch -v 2> /dev/null | \
+  echo (command git branch -v -l "$branch_name" 2> /dev/null | \
     grep 'ahead' | wc -l | tr -d ' ')
 end
 
