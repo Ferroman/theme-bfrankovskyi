@@ -137,9 +137,9 @@ end
 function _print_spit_too_long -a prompt -a arrow
   
   if [ (string length --visible $prompt) -gt (math -s0 $COLUMNS / 2) ]
-    echo $prompt\\n'└'$arrow' '
+    echo $prompt\\n'└'$arrow''
   else
-    echo $prompt$arrow' '
+    echo $prompt$arrow''
   end
 end
 
