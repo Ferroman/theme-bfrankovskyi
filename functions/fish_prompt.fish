@@ -166,10 +166,11 @@ function fish_prompt
   set -l arrow '⋊>'
   set -l time (_print_time $color_normal $color_normal)
 
-  set -l cwd $color_cwd(basename (prompt_pwd))$color_normal
+  set -l cwd # $color_cwd(basename (prompt_pwd))$color_normal
   set -l git_status (_print_git_status $color_git_branch $color_normal $color_bracket $color_unpushed $color_git_dirty $color_unpulled)
 
   set -l command_line "$user$time $cwd $git_status$failed$color_normal"
   set -l split (_print_spit_too_long $command_line $arrow)
+  echo -s $color_cwd(pwd) ' ↓'$color_normal
   echo -s -e $split
 end
