@@ -131,6 +131,48 @@ function _print_git_status -a main_color -a color_normal -a color_bracket -a col
   echo ""
 end 
 
+function _print_kubeconfig -a main_color -a color_normal -a color_bracket
+  set -l current_kubeconfig (command kubeprompt -f "{{if .Enabled}}[{{ slice .Ctx 12 35 | Yellow }}{{ slice .Ctx 43 | Yellow | Bold }}]{{end}}")
+  set -l kubeconfig "$current_kubeconfig"
+  
+  echo $kubeconfig
+end
+
+# Function to fast retrieve current language set by asdf
+# https://github.com/asdf-vm/asdf/issues/290#issuecomment-958929157
+function _asdf_current -a lang
+    set current (pwd)
+    set versions
+    set root (dirname $HOME)
+    set asdf (asdf --version 2> /dev/null)
+
+    env_lang_version=ASDF_(string upper $lang)_VERSION set env_version $$env_lang_version
+
+    # if no asdf do nothing
+    if test -z "$asdf"
+      return
+    end
+
+    if test -n "$env_version"
+        echo $env_version
+        return 0
+    end
+
+    while test "$current" != "$root"
+        if test -e $current/.tool-versions
+            set -a versions (string split "\n" < $current/.tool-versions)
+        end
+        set current (string join "/" (string split "/" $current)[..-2])
+    end
+
+    for ver in $versions
+        if string match --quiet "$lang *" $ver
+            echo (string split -f2 " " "$ver")
+            return 0
+        end
+    end
+end
+
 # Split command line to two lines if prompt is bigger than half
 # of the screen. It also adds indication line connecting two
 # prompt lines to indicate movement
@@ -140,6 +182,27 @@ function _print_spit_too_long -a prompt -a arrow
     echo $prompt\\n'└'$arrow''
   else
     echo $prompt$arrow''
+  end
+end
+
+# print asdf version of the given tool
+function _print_asdf -a tool -a short -a main_color -a color_normal -a color_bracket
+  set -l current_tool (_asdf_current $tool)
+  if test -n "$current_tool"
+    echo "[$main_color$short$color_normal:$current_tool]"
+  end
+end
+
+# print all versions set by asdf
+# curretly supports Python and JS
+function _print_asdf_line -a main_color -a color_normal -a color_bracket
+  set -l asdf_python (_print_asdf 'python' 'py' $main_color $color_normal $color_bracket)
+  set -l asdf_nodejs (_print_asdf 'nodejs' 'js' $main_color $color_normal $color_bracket)
+
+  set -l line "$asdf_python$asdf_nodejs"
+
+  if test -n "$line"
+    echo "$color_bracket($color_normal$line$color_bracket)$color_normal"
   end
 end
 
@@ -160,6 +223,8 @@ function fish_prompt
   set -l color_git_dirty (set_color -o $fish_color_param)
   set -l color_bracket (set_color -o $normal)
   set -l color_git_branch (set_color -o $fish_color_operator)
+  set -l color_kubeconfig (set_color -o $fish_color_operator)
+  set -l color_asdf (set_color -o $fish_color_operator)
 
   set -l failed (_print_failed_status $current_status $color_error $normal)
   set -l user (_print_user $color_error $normal)
@@ -168,9 +233,11 @@ function fish_prompt
 
   set -l cwd # $color_cwd(basename (prompt_pwd))$color_normal
   set -l git_status (_print_git_status $color_git_branch $color_normal $color_bracket $color_unpushed $color_git_dirty $color_unpulled)
+  set -l kubeconfig (_print_kubeconfig $color_kubeconfig $color_normal $color_bracket)
 
-  set -l command_line "$user$time $cwd $git_status$failed$color_normal"
+  set -l command_line "$user$time $cwd$kubeconfig$git_status$failed$color_normal"
+  set -l asdf_line (_print_asdf_line $color_asdf $color_normal $color_bracket)
   set -l split (_print_spit_too_long $command_line $arrow)
-  echo -s $color_cwd(pwd) ' ↓'$color_normal
+  echo -s $asdf_line $color_cwd(pwd) ' ↓'$color_normal
   echo -s -e $split
 end
