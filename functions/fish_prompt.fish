@@ -132,10 +132,12 @@ function _print_git_status -a main_color -a color_normal -a color_bracket -a col
 end 
 
 function _print_kubeconfig -a main_color -a color_normal -a color_bracket
-  set -l current_kubeconfig (command kubeprompt -f "{{if .Enabled}}[{{ slice .Ctx 12 35 | Yellow }}{{ slice .Ctx 43 | Yellow | Bold }}]{{end}}")
-  set -l kubeconfig "$current_kubeconfig"
-  
-  echo $kubeconfig
+  if type -q kubeprompt
+    set -l current_kubeconfig (command kubeprompt -f "{{if .Enabled}}[{{ slice .Ctx 12 35 | Yellow }}{{ slice .Ctx 43 | Yellow | Bold }}]{{end}}")
+    set -l kubeconfig "$current_kubeconfig"
+    
+    echo $kubeconfig
+  end
 end
 
 # Function to fast retrieve current language set by asdf
