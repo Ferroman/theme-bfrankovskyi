@@ -1,4 +1,6 @@
-`bfrankovskyi` is my personal fish prompt.
+`bfrankovskyi` is my personal minimalistic fish prompt.
+
+![screenshot.png](assets/imgs/screenshot.png)
 
 # Installation
 
@@ -20,3 +22,4 @@ fisher Ferroman/theme-bfrankovskyi
 * Shows current Kubenetes cluster if [kubeprompt](https://github.com/jlesquembre/kubeprompt) is enabled
 - Shows current language activated by [asdf](https://asdf-vm.com)
 * Colors are based on the current fish theme
+
