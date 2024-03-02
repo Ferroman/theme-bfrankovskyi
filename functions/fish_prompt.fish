@@ -175,6 +175,50 @@ function _asdf_current -a lang
     end
 end
 
+# Function to fast retrieve current language set by mise
+function _mise_current -a lang
+    set current (pwd)
+    set versions
+    set root (dirname $HOME)
+    set mise (mise --version 2> /dev/null)
+
+    env_lang_version=MISE_(string upper $lang)_VERSION set env_version $$env_lang_version
+
+    # if no mise do nothing
+    if test -z "$mise"
+      return
+    end
+
+    if test -n "$env_version"
+        echo $env_version
+        return 0
+    end
+
+    echo $(mise current 2> /dev/null | grep $lang | awk '{print $2}')
+    return 0
+end
+
+# print asdf version of the given tool
+function _print_mise -a tool -a short -a main_color -a color_normal -a color_bracket
+  set -l current_tool (_mise_current $tool)
+  if test -n "$current_tool"
+    echo "[$main_color$short$color_normal:$current_tool]"
+  end
+end
+
+# print all versions set by mise
+# currently supports Python and JS
+function _print_mise_line -a main_color -a color_normal -a color_bracket
+  set -l mise_python (_print_mise 'python' 'py' $main_color $color_normal $color_bracket)
+  set -l mise_nodejs (_print_mise 'node' 'js' $main_color $color_normal $color_bracket)
+
+  set -l line "$mise_python$mise_nodejs"
+
+  if test -n "$line"
+    echo "$color_bracket($color_normal$line$color_bracket)$color_normal"
+  end
+end
+
 # Split command line to two lines if prompt is bigger than half
 # of the screen. It also adds indication line connecting two
 # prompt lines to indicate movement
@@ -239,7 +283,8 @@ function fish_prompt
 
   set -l command_line "$user$time $cwd$kubeconfig$git_status$failed$color_normal"
   set -l asdf_line (_print_asdf_line $color_asdf $color_normal $color_bracket)
+  set -l mise_line (_print_mise_line $color_asdf $color_normal $color_bracket)
   set -l split (_print_spit_too_long $command_line $arrow)
-  echo -s $asdf_line $color_cwd(pwd) ' ↓'$color_normal
+  echo -s $asdf_line $mise_line $color_cwd(pwd) ' ↓'$color_normal
   echo -s -e $split
 end
