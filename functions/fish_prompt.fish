@@ -146,15 +146,14 @@ function _asdf_current -a lang
     set current (pwd)
     set versions
     set root (dirname $HOME)
-    set asdf (asdf --version 2> /dev/null)
-
-    env_lang_version=ASDF_(string upper $lang)_VERSION set env_version $$env_lang_version
 
     # if no asdf do nothing
     if test -z "$asdf"
       return
     end
 
+    env_lang_version=ASDF_(string upper $lang)_VERSION set env_version $$env_lang_version
+    set asdf (asdf --version 2> /dev/null)
     if test -n "$env_version"
         echo $env_version
         return 0
